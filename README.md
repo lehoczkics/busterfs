@@ -4,10 +4,10 @@ Instructions on how to install Debian Buster on btrfs subvolumes - may work on f
 This meant to be a semi-copy-pastable cookbook for setup, worked for me but may not work for you. 
 
 ## Story
-Came across [this](https://wiki.archlinux.org/index.php/User:Altercation/Bullet_Proof_Arch_Install) excellent guide for Arch. Liked the idea of fully encrypted system with native dm-crypt AND using btrfs subvolumes. Experimented for a while and got it work on Debian. (turns out Ubuntu can be installed like this as well)
+Came across [this](https://wiki.archlinux.org/index.php/User:Altercation/Bullet_Proof_Arch_Install) excellent guide for Arch. Liked the idea of a fully encrypted system with native dm-crypt and using btrfs features like compression, snapshots and subvolumes. Experimented for a while and got it work on Debian. (turns out Ubuntu can be installed like this as well)
 
 ## Assumptions:
-- An UEFI-capable PC or laptop with one disk witout data. Disk will be wiped so secure your data first someplace else, if any.
+- An UEFI-capable PC or laptop with one SSD witout data. Disk will be wiped so secure your data first someplace else, if any.
 - Enabled UFEI boot and disabled both Legacy boot and Secure boot in firmware settings
 - Wired network (for wireless to work you need to get the wifi firmware package, eg. *firmware-iwlwifi.deb* for an Intel adapter)
 - an USB drive with Debian Live on it (I used the XFCE Edition from [here](https://cdimage.debian.org/debian-cd/current-live/amd64/iso-hybrid/) )
@@ -29,7 +29,8 @@ o_btrfs=$o,compress=lzo,ssd,noatime
 ```
 Now let's go ahead and wipe that drive!
 
-## PARTITIONIG
+## Partitioning
+Let's create a big enough EFI partition and 8GB worth of swap. (Feel free to alter the values.) All the remaining space will be used for the encrypted system storage. 
 ```bash
 sgdisk --zap-all $DRIVE
 sgdisk --clear \
@@ -58,7 +59,8 @@ btrfs subvolume create /mnt/root
 btrfs subvolume create /mnt/home
 btrfs subvolume create /mnt/snapshots
 ```
-## MOUNT
+## Mount the subvolumes
+with the mount options we declared above:
 ```bash
 umount -R /mnt
 mount -t btrfs -o subvol=root,$o_btrfs LABEL=system /mnt
@@ -72,7 +74,7 @@ mount -o $o LABEL=EFI /mnt/boot/efi
 apt-get update && apt-get install vim debootstrap arch-install-scripts
 ```
 
-## INSTALL base system
+## Install base system
 ```bash
 debootstrap --arch amd64 buster /mnt $MIRROR
 ```
@@ -133,7 +135,7 @@ GRUB_ENABLE_CRYPTODISK=y
 ```
 to the end of the file; then alter the **GRUB_CMDLINE** row to this:
 ``` bash
-GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0 quiet"
+GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0 quiet noresume"
 ```
 (because I like good old interface names like eth0 and wlan0)
 
@@ -159,7 +161,7 @@ systemctl reboot
 
 ## Start the new system
 If everything went as expected, you will be prompted for the unlock password, then got a grub menu, then asked for the password again mid-boot.
-If you mistype the first password then grub wil be unable to get it's config and and present you a naked **grub>** prompt.
+If you mistype the first password then grub will be unable to get it's config and and present you a naked **grub>** prompt.
 Start over with Ctrl + Alt + Del.
 
 If you got a **login:** prompt then congratulations: your system is up and running. Go ahead and log in as root.
