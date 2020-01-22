@@ -1,5 +1,5 @@
-# busterfs
-Instructions on how to install Debian Buster on btrfs subvolumes - may work on further releases
+# Bionic + btrfs
+Instructions on how to install Ubuntu Bionic on btrfs subvolumes - may work on further releases
 
 This meant to be a semi-copy-pastable cookbook for setup, worked for me but may not work for you. 
 
@@ -20,10 +20,10 @@ Then you need to know the device name you will install to. Chances are it will b
 Open a terminal, **be root** and execute 
 `lsblk | grep disk`
 to find out; let's assume it is /dev/sda and assign it to a variable and a couple of others.
-For MIRROR the easiest is `http://deb.debian.org/debian`; I used a local one
+For MIRROR the easiest is `http://archive.ubuntu.com/ubuntu`; I used a local one
 ```bash
 DRIVE=/dev/sda
-MIRROR="http://ftp.bme.hu/debian"
+MIRROR="http://hu.archive.ubuntu.com/ubuntu"
 o=defaults,x-mount.mkdir
 o_btrfs=$o,compress=lzo,ssd,noatime
 ```
@@ -76,7 +76,7 @@ apt-get update && apt-get install vim debootstrap arch-install-scripts
 
 ## Install base system
 ```bash
-debootstrap --arch amd64 buster /mnt $MIRROR
+debootstrap --arch amd64 bionic /mnt $MIRROR
 ```
 
 ## Config
@@ -108,7 +108,7 @@ dpkg-reconfigure locales
 dpkg-reconfigure tzdata
 dpkg-reconfigure console-setup 
 hostnamectl set-hostname [your hostname]
-apt-get install linux-image-amd64 grub-efi-amd64 efibootmgr cryptsetup btrfs-progs sudo vim zsh
+apt-get install linux-image-generic grub-efi-amd64 efibootmgr cryptsetup btrfs-progs sudo vim zsh
 adduser --shell /usr/bin/zsh [your username]
 usermod -aG sudo [your username]
 ```
@@ -142,16 +142,19 @@ GRUB_CMDLINE_LINUX="quiet"
 
 And install it into the EFI partition:
 ``` bash
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=debian --recheck --debug
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --debug
 grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
 ### Configure wired network
-Edit /etc/network/interfaces and add:
+Create /etc/netplan/interfaces.yaml and add:
 ```bash
-auto eth0
-allow-hotplug eth0
-iface eth0 inet dhcp
+network:
+        version: 2
+        renderer: networkd
+        ethernets:
+                eth0:
+                        dhcp4: true
 ```
 
 At this point the base install is completed, time to exit the chroot and boot into the new system:
