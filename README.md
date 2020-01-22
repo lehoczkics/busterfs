@@ -1,10 +1,7 @@
-# Bionic + btrfs
-Instructions on how to install Ubuntu Bionic on btrfs subvolumes - may work on further releases
+# Bionic + btrfs without swap
 
-This meant to be a semi-copy-pastable cookbook for setup, worked for me but may not work for you. 
-
-## Story
-Came across [this](https://wiki.archlinux.org/index.php/User:Altercation/Bullet_Proof_Arch_Install) excellent guide for Arch. Liked the idea of a fully encrypted system with native dm-crypt and using btrfs features like compression, snapshots and subvolumes. Experimented for a while and got it work on Debian. (turns out Ubuntu can be installed like this as well)
+If you have plenty of RAM then do not waste precious SSD sapce on swap space. 
+Try [zram](https://en.wikipedia.org/wiki/Zram) instead. 
 
 ## Assumptions:
 - An UEFI-capable PC or laptop with one SSD witout data. Disk will be wiped so secure your data first someplace else, if any.
@@ -12,7 +9,7 @@ Came across [this](https://wiki.archlinux.org/index.php/User:Altercation/Bullet_
 - Wired network (for wireless to work you need to get the wifi firmware package, eg. *firmware-iwlwifi.deb* for an Intel adapter)
 - an USB drive with Debian Live on it (I used the XFCE Edition from [here](https://cdimage.debian.org/debian-cd/current-live/amd64/iso-hybrid/) )
 - You don't mind typing the encryption password twice on system (re)start. *(once for the boot loader to get the kernel image and another for mount the / partition)* 
-- You don't want to hibernate the machine. With this setup swap partition content is non-recoverable *(gets re-encrypted with random on every boot)* therefore resuming from hibernation is not possible.
+- You don't want to hibernate the machine. With this setup there is no swap partition therefore resuming from hibernation is not possible.
 
 ## Set up the environment
 First you need to boot the machine from the USB drive. 
@@ -35,21 +32,17 @@ Let's create a big enough EFI partition and 8GB worth of swap. (Feel free to alt
 sgdisk --zap-all $DRIVE
 sgdisk --clear \
          --new=1:0:+550MiB --typecode=1:ef00 --change-name=1:EFI \
-         --new=2:0:+8GiB   --typecode=2:8200 --change-name=2:cryptswap \
-         --new=3:0:0       --typecode=3:8300 --change-name=3:cryptsystem \
+         --new=2:0:0       --typecode=3:8300 --change-name=2:cryptsystem \
            $DRIVE
 
 mkfs.fat -F32 -n EFI /dev/disk/by-partlabel/EFI
 ```
 
-## Create encrypted system space and swap
+## Create encrypted system space
 Have a good password at hand to use for unlocking your drive. 
 ```bash
 cryptsetup luksFormat --type luks1 /dev/disk/by-partlabel/cryptsystem
 cryptsetup open /dev/disk/by-partlabel/cryptsystem system
-cryptsetup open --type plain --key-file /dev/urandom /dev/disk/by-partlabel/cryptswap swap
-mkswap -L swap /dev/mapper/swap
-swapon -L swap
 ```
 ## Create btrfs subvolumes
 ```bash
@@ -84,18 +77,6 @@ Save the actual mount layout to fstab:
 ```bash
 genfstab -L -p /mnt >> /mnt/etc/fstab
 ```
-then edit it:
-```bash
-vim /mnt/etc/fstab
-```
-and change the line for swap from this: 
-```bash
-LABEL=swap          	none      	swap      	defaults  	0 0
-```
-to this:
-```bash
-/dev/mapper/cryptswap    	none      	swap      	sw  	0 0
-```
 
 ## chroot time
 Head to the new installation and set up basic things like root password, hostname, time zone. 
@@ -108,7 +89,7 @@ dpkg-reconfigure locales
 dpkg-reconfigure tzdata
 dpkg-reconfigure console-setup 
 hostnamectl set-hostname [your hostname]
-apt-get install linux-image-generic grub-efi-amd64 efibootmgr cryptsetup btrfs-progs sudo vim zsh
+apt-get install linux-image-generic grub-efi-amd64 efibootmgr cryptsetup btrfs-progs zram-config sudo vim zsh
 adduser --shell /usr/bin/zsh [your username]
 usermod -aG sudo [your username]
 ```
@@ -116,7 +97,6 @@ usermod -aG sudo [your username]
 Edit /etc/crypttab and add the following:
 ```bash
 system         /dev/disk/by-partlabel/cryptsystem        none    luks
-cryptswap        /dev/disk/by-partlabel/cryptswap        /dev/urandom        swap,offset=2048,cipher=aes-xts-plain64,size=256
 ```
 
 Re-generate initramfs with some tweaks:
