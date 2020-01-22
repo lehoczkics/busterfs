@@ -4,7 +4,7 @@ Instructions on how to install Debian Buster on btrfs subvolumes - may work on f
 This meant to be a semi-copy-pastable cookbook for setup, worked for me but may not work for you. 
 
 ## Story
-Came across [this](https://wiki.archlinux.org/index.php/User:Altercation/Bullet_Proof_Arch_Install) excellent guide for Arch. Liked the idea of a fully encrypted system with native dm-crypt and using btrfs features like compression, snapshots and subvolumes. Experimented for a while and got it work on Debian. (turns out Ubuntu can be installed like this as well)
+Came across [this](https://wiki.archlinux.org/index.php/User:Altercation/Bullet_Proof_Arch_Install) excellent guide for Arch. Liked the idea of a fully encrypted system with native dm-crypt and using btrfs features like compression, snapshots and subvolumes. Experimented for a while and got it work on Debian. (turns out Ubuntu can be installed like this as well, see [ubuntu branch](https://github.com/lehoczkics/busterfs/tree/ubuntu) for the same btrfs setup for Ubuntu Bionic)
 
 ## Assumptions:
 - An UEFI-capable PC or laptop with one SSD witout data. Disk will be wiped so secure your data first someplace else, if any.
