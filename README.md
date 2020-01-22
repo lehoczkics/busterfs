@@ -133,9 +133,10 @@ First add
 ``` bash
 GRUB_ENABLE_CRYPTODISK=y
 ```
-to the end of the file; then alter the **GRUB_CMDLINE** row to this:
+to the end of the file; then alter the **GRUB_CMDLINE** lines like this:
 ``` bash
-GRUB_CMDLINE_LINUX="net.ifnames=0 biosdevname=0 quiet noresume"
+GRUB_CMDLINE_LINUX_DEFAULT="net.ifnames=0 biosdevname=0 noresume"
+GRUB_CMDLINE_LINUX="quiet"
 ```
 (because I like good old interface names like eth0 and wlan0)
 
