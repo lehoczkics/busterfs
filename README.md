@@ -1,6 +1,6 @@
 # Bionic + btrfs without swap
 
-If you have plenty of RAM then do not waste precious SSD sapce on swap space. 
+If you have plenty of RAM then do not waste precious SSD space on swap. 
 Try [zram](https://en.wikipedia.org/wiki/Zram) instead. 
 
 ## Assumptions:
@@ -32,7 +32,7 @@ Let's create a big enough EFI partition and 8GB worth of swap. (Feel free to alt
 sgdisk --zap-all $DRIVE
 sgdisk --clear \
          --new=1:0:+550MiB --typecode=1:ef00 --change-name=1:EFI \
-         --new=2:0:0       --typecode=3:8300 --change-name=2:cryptsystem \
+         --new=2:0:0       --typecode=2:8300 --change-name=2:cryptsystem \
            $DRIVE
 
 mkfs.fat -F32 -n EFI /dev/disk/by-partlabel/EFI
